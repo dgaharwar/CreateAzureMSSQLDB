@@ -4,28 +4,25 @@
 #   #default = "<%= customOptions.azurergprep_subscriptionid %>"
 # }
 
-variable "subscription_id" {
+variable "subscriptionId" {
   type      = string
   sensitive = true
   #default = "<%= customOptions.azurergprep_subscriptionid %>"
 }
-
-variable "client_id" {
+variable "tenantId" {
+  type      = string
+  sensitive = true
+  #default = "<%= customOptions.azurergprep_tenantid %>"
+}
+variable "clientId" {
   type      = string
   sensitive = true
   #default = "<%= customOptions.azurergprep_clientid %>"
 }
-
-variable "client_secret" {
+variable "clientSecret" {
   type      = string
   sensitive = true
   #default = "<%= customOptions.azurergprep_clientsecret %>"
-}
-
-variable "tenant_id" {
-  type      = string
-  sensitive = true
-  #default = "<%= customOptions.azurergprep_tenantid %>"
 }
 
 variable "resourceGroup" {
