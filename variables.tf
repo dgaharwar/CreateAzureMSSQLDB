@@ -31,59 +31,29 @@ variable "resourceGroup" {
   #default     = "terratest"
 }
 
-variable "mssqlServerName" {
-  description = "MSSQL Server Name"
+variable "mysqlServerName" {
+  description = "MySQL Server Name"
   type        = string
+
   validation {
-    condition     = length(var.mssqlServerName) > 0 && length(var.mssqlServerName) <= 63
-    error_message = "Server name must be greater than 0 and less than or equal to 63 characters."
+    condition     = length(var.mysqlServerName) >= 3 && length(var.mysqlServerName) <= 63
+    error_message = "Server name must be >= 3 and <= 63 characters."
   }
 
   validation {
-    condition     = can(regex("^[a-z0-9]", var.mssqlServerName)) && can(regex("[a-z0-9]$", var.mssqlServerName)) && (!can(regex("[^a-z0-9-]", var.mssqlServerName)))
+    condition     = can(regex("^[a-z0-9]", var.mysqlServerName)) && can(regex("[a-z0-9]$", var.mysqlServerName)) && (!can(regex("[^a-z0-9-]", var.mysqlServerName)))
     error_message = "Server name must contain only lower case letters, hyphens, and numbers. Server name must not start or end with a hypen."
   }
 }
 
-/*
-variable "mssqlVersion" {
-  description = "MSSQL Version"
-  type        = string
-}
-*/
-variable "mssqlDBName" {
-  description = "MSSQL Database Name"
-  type        = string
-
-  validation {
-    condition     = length(var.mssqlDBName) > 0 && length(var.mssqlDBName) <= 128
-    error_message = "Database name must be less than or equal to 128 characters."
-  }
-
-  validation {
-    condition     = can(regex("^[a-zA-Z0-9]", var.mssqlDBName)) && can(regex("[a-zA-Z0-9]$", var.mssqlDBName)) && (!can(regex("[^a-zA-Z0-9-]", var.mssqlDBName)))
-    error_message = "Database name must contain only letters, hyphens, and numbers. Database name must not start or end with a hypen."
-  }
-}
-
-variable "mssqlSKU" {
-  description = "MSSQL SKU"
+variable "mysqlVersion" {
+  description = "MySQL Version"
   type        = string
 }
 
-variable "minCapacity" {
-  type = map(string)
-  default = {
-    "GP_S_Gen5_1" = "0.5"
-    "GP_S_Gen5_2" = "0.5"
-    "GP_S_Gen5_4" = "0.5"
-    "GP_S_Gen5_6" = "0.75"
-    "GP_S_Gen5_8" = "1"
-    "GP_S_Gen5_10" = "1.25"
-    "GP_S_Gen5_12" = "1.5"
-    "GP_S_Gen5_14" = "1.75"
-    "GP_S_Gen5_16" = "2"
-  }
+variable "mysqlServerSKU" {
+  description = "MySQL Server SKU"
+  type        = string
 }
 
 variable "adminUser" {
@@ -91,13 +61,18 @@ variable "adminUser" {
   type        = string
 
   validation {
-    condition     = (!contains(["admin", "administrator", "sa", "root", "dbmanager", "loginmanager", "dbo", "guest", "public"], var.adminUser))
-    error_message = "Administrator username must not contain a SQL Identifier or a typical system name."
+    condition     = length(var.adminUser) >= 1 && length(var.adminUser) <= 16
+    error_message = "Administrator username must be >= 1 and <= 63 characters."
   }
 
   validation {
-    condition     = can(regex("^[a-z0-9]", var.adminUser)) && can(regex("[a-z0-9]$", var.adminUser)) && (!can(regex("[^a-z0-9-]", var.adminUser)))
-    error_message = "Administrator username must contain only lower case letters, hyphens, and numbers. Username must not start or end with a hypen."
+    condition     = (!contains(["azure_superuser", "admin", "administrator", "root", "guest", "public"], var.adminUser))
+    error_message = "Administrator username cannot be entered value."
+  }
+
+  validation {
+    condition     = can(regex("^[a-zA-Z]", var.adminUser)) && can(regex("[a-zA-Z0-9]$", var.adminUser)) && (!can(regex("[^a-zA-Z0-9]", var.adminUser)))
+    error_message = "Administrator username must contain only alphanumeric characters and must not start with a number."
   }
 
 }
@@ -108,7 +83,7 @@ variable "adminPassword" {
 
   validation {
     condition     = length(var.adminPassword) >= 8 && length(var.adminPassword) <= 128
-    error_message = "Administrator password must be greater than or equal to 8 and less than or equal to 128 characters."
+    error_message = "Administrator password must be >= 8 and <= 128 characters."
   }
 
   validation {
@@ -130,7 +105,41 @@ variable "adminPassword" {
     condition     = can(regex("[^a-zA-Z0-9_]", var.adminPassword))
     error_message = "Administrator password must contain at least one special character."
   }
+}
 
+variable "storageSizeGB" {
+  description = "Storage size (GB)"
+  type        = number
+
+  validation {
+    condition     = var.storageSizeGB >= 5 && var.storageSizeGB <= 16000
+    error_message = "The storage size must be >= 5 and <= 16000 GB."
+  }
+}
+
+variable "mysqlDBName" {
+  description = "MySQL Database Name"
+  type        = string
+
+  validation {
+    condition     = length(var.mysqlDBName) > 0 && length(var.mysqlDBName) <= 128
+    error_message = "Database name must be <= 128 characters."
+  }
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9]", var.mysqlDBName)) && can(regex("[a-zA-Z0-9]$", var.mysqlDBName)) && (!can(regex("[^a-zA-Z0-9-_]", var.mysqlDBName)))
+    error_message = "Database name must contain only letters, hyphens, and numbers. Database name must not start or end with a hypen."
+  }
+}
+
+variable "charset" {
+  description = "Charset for the MySQL Database"
+  type        = string
+}
+
+variable "collation" {
+  description = "Collation for the MySQL Database"
+  type        = string
 }
 
 # variable "startIPAddress" {
@@ -153,23 +162,13 @@ variable "adminPassword" {
 #   }
 # }
 
-variable "maxSizeGB" {
-  description = "Maximum size of Database(GB)"
-  type        = number
-
-  validation {
-    condition     = var.maxSizeGB > 0 && var.maxSizeGB <= 1000
-    error_message = "The storage size must be greater than 0 and less than or equal to 1000 GB."
-  }
-}
-
 variable "backupRetentionDays" {
   description = "Backup Retention Days between 7 and 35"
   type        = number
 
   validation {
     condition     = var.backupRetentionDays >= 7 && var.backupRetentionDays <= 35
-    error_message = "Backup retention days must be greater than or equal to 7 and less than or equal to 35 days."
+    error_message = "Backup retention days must be >= 7 and <= 35 days."
   }
 }
 
@@ -181,6 +180,12 @@ variable "vNet" {
 variable "subnet" {
   description = "Subnet"
   type        = string
+}
+
+variable "enableGeoRedundateBackup" {
+  description = "Enable Geo Redundant Backup"
+  type        = bool
+  default     = true
 }
 
 # variable "resourceGroupOmhsDBA" {
